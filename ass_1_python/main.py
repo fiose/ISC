@@ -18,10 +18,12 @@ def load_image_matrix(image_name):
     A = A[:, :, 0]
     return A
 
+
 def load_test_matrix():
     n = 4
-    random_matrix_array = np.random.uniform(low=0, high=0.5, size=(n, n))
+    random_matrix_array = np.random.randint(2, size=(n, n))
     return random_matrix_array
+
 
 def main():
     image_name = 'oval'
@@ -29,6 +31,7 @@ def main():
 
     image_name = 'test'
     matrix = load_test_matrix()
+    print(matrix)
 
     # get sums of columns and rows
     colsum = np.sum(matrix, axis=0)  # vertical
