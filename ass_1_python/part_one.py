@@ -1,7 +1,13 @@
+"""
+part_one.py is used to transform the oval/rectangle/rock pngs to *_HVproj.mat files.
+It is also able to create test_HVproj.mat by using generate_test_matrix instead of load_image_matrix,
+and setting the image_name to "test"
+"""
 import cv2
 import sys
 import numpy as np
 import scipy.io
+
 
 def load_image_matrix(image_name):
     # open image
@@ -19,7 +25,7 @@ def load_image_matrix(image_name):
     return A
 
 
-def load_test_matrix():
+def generate_test_matrix():
     n = 4
     random_matrix_array = np.random.randint(2, size=(n, n))
     return random_matrix_array
@@ -29,19 +35,16 @@ def main():
     image_name = 'oval'
     matrix = load_image_matrix(image_name)
 
-    image_name = 'test'
-    matrix = load_test_matrix()
-    print(matrix)
-
     # get sums of columns and rows
     colsum = np.sum(matrix, axis=0)  # vertical
     rowsum = np.sum(matrix, axis=1)  # horizontal
 
-    # Save the column and row sums in a file rectangle_HVproj.mat
+    # Save the column and row sums in a file <image_name>_HVproj.mat
     # replace 0s with the matching variable
     matlab_result = {"colsum": colsum, "rowsum": rowsum}
     project_file = image_name + '_HVproj' + '.mat'
     scipy.io.savemat(project_file, matlab_result)
+
 
 if __name__ == "__main__":
     main()
