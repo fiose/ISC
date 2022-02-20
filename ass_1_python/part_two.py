@@ -4,22 +4,24 @@ import cv2
 
 
 def load_HVproj_file(image_name):
-    proj_file = image_name + '_HVproj' + '.mat'
+    proj_file = 'Practical_Tomography_Output/' + image_name + '_HVproj' + '.mat'
     matlab_result = scipy.io.loadmat(proj_file)
     return matlab_result
 
 
-def reconstruct_image(rowsum, colsum):
+def reconstruct_image(rowsum, colsum, generate_analysis = False):
     eps = 0.0001
     MAX_ITER = 10000
     current_iter = 0
     n = len(rowsum)
-    print(f'rowsum: {rowsum}')
-    print(f'colsum: {colsum}')
-    print(f'n: {n}')
+    #print(f'rowsum: {rowsum}')
+    #print(f'colsum: {colsum}')
     matrix = np.zeros((n, n))
     last_matrix = matrix
-    print(f'matrix:\n{matrix}')
+
+    # useful information to analyze result if desired
+    analysis = { 'deltas': [], 'matrices': [] }
+
     while current_iter < MAX_ITER:
         current_iter += 1
 
@@ -43,11 +45,19 @@ def reconstruct_image(rowsum, colsum):
 
         # calculate average pixel absolute difference between current matrix and last matrix
         pixel_delta = 1/(n*n) * np.sum(np.abs(matrix - last_matrix))
-        #print(f'Pixel delta: {pixel_delta}')
+
+        if generate_analysis == True:
+            analysis['deltas'].append(pixel_delta)
+            analysis['matrices'].append(matrix)
+
         if pixel_delta < eps:
             break
         last_matrix = matrix
-    return matrix
+
+    analysis['final_colsum'] = np.sum(matrix, axis = 0)
+    analysis['final_rowsum'] = np.sum(matrix, axis = 1)
+
+    return matrix, analysis
 
 
 def translate_matrix_to_pixels(matrix):
@@ -63,24 +73,23 @@ def translate_matrix_to_pixels(matrix):
     return new_matrix
 
 
-def save_image(image_name, image_matrix, k=None, eps=None):
-    recfile = image_name + '_HVrec_' + '_k = ' + str(k) + '_eps = ' + str(eps) + '.png'
+def save_image(image_name, image_matrix):
+    recfile = image_name + '.png'
     cv2.imwrite(recfile, image_matrix)
-    print(f'{recfile} Saved')
 
 
 def main():
-    image_name = 'rock'
+    image_name = 'oval'
     # get the colsum and rowsum from the projection file
     projection = load_HVproj_file(image_name)
     colsum = projection["colsum"][0]
     rowsum = projection["rowsum"][0]
     # reconstruct the approximate values of the image matrix
-    image_matrix = reconstruct_image(rowsum, colsum)
+    image_matrix, _ = reconstruct_image(rowsum, colsum)
     # turn the approximate values of the image matrix into pixels
     image_matrix = translate_matrix_to_pixels(image_matrix)
     # save the image matrix to a png file
-    save_image(image_name, image_matrix)
+    save_image('Practical_Tomography_Output/'+image_name+'_reconstructed', image_matrix)
 
 
 if __name__ == "__main__":

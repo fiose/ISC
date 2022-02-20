@@ -42,7 +42,7 @@ def main():
     # Save the column and row sums in a file <image_name>_HVproj.mat
     # replace 0s with the matching variable
     matlab_result = {"colsum": colsum, "rowsum": rowsum}
-    project_file = image_name + '_HVproj' + '.mat'
+    project_file = 'Practical_Tomography_Output/' + image_name + '_HVproj' + '.mat'
     scipy.io.savemat(project_file, matlab_result)
 
 
