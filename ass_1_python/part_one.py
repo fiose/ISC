@@ -32,7 +32,7 @@ def generate_test_matrix():
 
 
 def main():
-    image_name = 'oval'
+    image_name = 'rock'
     matrix = load_image_matrix(image_name)
 
     # get sums of columns and rows

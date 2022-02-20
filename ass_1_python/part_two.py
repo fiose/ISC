@@ -10,39 +10,43 @@ def load_HVproj_file(image_name):
 
 
 def reconstruct_image(rowsum, colsum):
-    # todo: figure out an appropriate value for eps, 100 is just a random number
-    eps = 100
-    MAX_ITER = 100
+    eps = 0.0001
+    MAX_ITER = 10000
     current_iter = 0
     n = len(rowsum)
     print(f'rowsum: {rowsum}')
     print(f'colsum: {colsum}')
     print(f'n: {n}')
     matrix = np.zeros((n, n))
+    last_matrix = matrix
     print(f'matrix:\n{matrix}')
-    while current_iter <= MAX_ITER:
+    while current_iter < MAX_ITER:
         current_iter += 1
-        for c in range(n):
-            Bc = (sum(matrix[:, c]) - colsum[c]) / n
-            matrix[:, c] = matrix[:, c] - Bc
-            # todo: do this min max check without additional for loop. It is required by the assignment
-            for r in range(n):
-                matrix[r, c] = min(max(matrix[r, c], 0), 1)
 
-        for r in range(n):
-            Br = (sum(matrix[r, :]) - rowsum[r])/n
-            matrix[r, :] = matrix[r, :] - Br
-            # todo: do this min max check without additional for loop. It is required by the assignment
-            for c in range(n):
-                matrix[r, c] = min(max(matrix[r, c], 0), 1)
-        # todo: do this summation without additional for loop. It is required by the assignment
-        x = 0
-        matrix_init = np.zeros((n, n))
-        for r in range(n):
-            for c in range(n):
-             x += abs((matrix[r, c] - matrix_init[r, c]))
-        if (1/(n*n) * x) < eps:
+        # process all columns
+        # calculate current colsum
+        curr_colsum = np.sum(matrix, axis = 0)
+        # create beta column matrix with values to update
+        Bc_matrix = np.ones((n, n)) * ((curr_colsum - colsum)/n)
+        # update matrix
+        matrix = matrix - Bc_matrix
+        matrix = matrix.clip(0, 1)
+
+        # process all rows
+        # calculate current rowsum
+        curr_rowsum = np.sum(matrix, axis = 1)
+        # create beta row matrix with values to update
+        Br_matrix = np.transpose(np.ones((n, n)) * ((curr_rowsum - rowsum)/n))
+        # update matrix
+        matrix = matrix - Br_matrix
+        matrix = matrix.clip(0, 1)
+
+        # calculate average pixel absolute difference between current matrix and last matrix
+        pixel_delta = 1/(n*n) * np.sum(np.abs(matrix - last_matrix))
+        #print(f'Pixel delta: {pixel_delta}')
+        if pixel_delta < eps:
             break
+        last_matrix = matrix
     return matrix
 
 
@@ -62,6 +66,7 @@ def translate_matrix_to_pixels(matrix):
 def save_image(image_name, image_matrix, k=None, eps=None):
     recfile = image_name + '_HVrec_' + '_k = ' + str(k) + '_eps = ' + str(eps) + '.png'
     cv2.imwrite(recfile, image_matrix)
+    print(f'{recfile} Saved')
 
 
 def main():
