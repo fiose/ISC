@@ -1,3 +1,6 @@
+"""
+Algorithm implementation
+"""
 import scipy.io
 import numpy as np
 import cv2
@@ -8,14 +11,66 @@ def load_HVproj_file(image_name):
     matlab_result = scipy.io.loadmat(proj_file)
     return matlab_result
 
+def implementation_with_for_loop(rowsum, colsum, matrix):
+    """
+    Implemetation using for loops to iterate over rows and columns
+    """
+    n = len(rowsum)
+
+    # process columns
+    for c in range(n):
+        Bc = (sum(matrix[:, c]) - colsum[c])/n
+        matrix[:, c] = matrix[:, c] - Bc
+        for r in range(n):
+            if matrix[r, c] < 0.0:
+                matrix[r, c] = 0.0
+            if matrix[r, c] > 1.0:
+                matrix[r, c] = 1.0
+
+    # process rows
+    for r in range(n):
+        Br = (sum(matrix[r, :]) - rowsum[r])/n
+        matrix[r, :] = matrix[r, :] - Br
+        for c in range(n):
+            if matrix[r, c] < 0.0:
+                matrix[r, c] = 0.0
+            if matrix[r, c] > 1.0:
+                matrix[r, c] = 1.0
+
+    return matrix
+
+def implementation_with_matrix(rowsum, colsum, matrix):
+    """
+    Implemetation using for matrix operations
+    """
+    n = len(rowsum)
+
+    # process all columns
+    # calculate current colsum
+    curr_colsum = np.sum(matrix, axis = 0)
+    # create beta column matrix with values to update
+    Bc_matrix = np.ones((n, n)) * ((curr_colsum - colsum)/n)
+    # update matrix
+    matrix = matrix - Bc_matrix
+    matrix = matrix.clip(0, 1)
+
+    # process all rows
+    # calculate current rowsum
+    curr_rowsum = np.sum(matrix, axis = 1)
+    # create beta row matrix with values to update
+    Br_matrix = np.transpose(np.ones((n, n)) * ((curr_rowsum - rowsum)/n))
+    # update matrix
+    matrix = matrix - Br_matrix
+    matrix = matrix.clip(0, 1)
+
+    return matrix
+
 
 def reconstruct_image(rowsum, colsum, generate_analysis = False):
     eps = 0.0001
-    MAX_ITER = 10000
+    MAX_ITER = 200
     current_iter = 0
     n = len(rowsum)
-    #print(f'rowsum: {rowsum}')
-    #print(f'colsum: {colsum}')
     matrix = np.zeros((n, n))
     last_matrix = matrix
 
@@ -25,26 +80,12 @@ def reconstruct_image(rowsum, colsum, generate_analysis = False):
     while current_iter < MAX_ITER:
         current_iter += 1
 
-        # process all columns
-        # calculate current colsum
-        curr_colsum = np.sum(matrix, axis = 0)
-        # create beta column matrix with values to update
-        Bc_matrix = np.ones((n, n)) * ((curr_colsum - colsum)/n)
-        # update matrix
-        matrix = matrix - Bc_matrix
-        matrix = matrix.clip(0, 1)
-
-        # process all rows
-        # calculate current rowsum
-        curr_rowsum = np.sum(matrix, axis = 1)
-        # create beta row matrix with values to update
-        Br_matrix = np.transpose(np.ones((n, n)) * ((curr_rowsum - rowsum)/n))
-        # update matrix
-        matrix = matrix - Br_matrix
-        matrix = matrix.clip(0, 1)
+        # choose implementation
+        #matrix = implementation_with_for_loop(rowsum, colsum, matrix)
+        matrix = implementation_with_matrix(rowsum, colsum, matrix)
 
         # calculate average pixel absolute difference between current matrix and last matrix
-        pixel_delta = 1/(n*n) * np.sum(np.abs(matrix - last_matrix))
+        pixel_delta = 1./(n*n) * np.sum(np.abs(matrix - last_matrix))
 
         if generate_analysis == True:
             analysis['deltas'].append(pixel_delta)
@@ -79,7 +120,7 @@ def save_image(image_name, image_matrix):
 
 
 def main():
-    image_name = 'oval'
+    image_name = 'rock'
     # get the colsum and rowsum from the projection file
     projection = load_HVproj_file(image_name)
     colsum = projection["colsum"][0]
