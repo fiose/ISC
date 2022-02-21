@@ -72,7 +72,7 @@ def reconstruct_image(rowsum, colsum, generate_analysis = False):
     current_iter = 0
     n = len(rowsum)
     matrix = np.zeros((n, n))
-    last_matrix = matrix
+    last_matrix = matrix.copy()
 
     # useful information to analyze result if desired
     analysis = { 'deltas': [], 'matrices': [] }
@@ -93,7 +93,7 @@ def reconstruct_image(rowsum, colsum, generate_analysis = False):
 
         if pixel_delta < eps:
             break
-        last_matrix = matrix
+        last_matrix = matrix.copy()
 
     analysis['final_colsum'] = np.sum(matrix, axis = 0)
     analysis['final_rowsum'] = np.sum(matrix, axis = 1)
