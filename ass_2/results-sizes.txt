@@ -1,0 +1,17 @@
+torch.Size([128, 3, 32, 32]) (batch of 128 images, each 32x32x3 (RGB))
+-- Relu
+torch.Size([128, 64, 32, 32])
+-- Layer 1
+torch.Size([128, 64, 32, 32])
+-- Layer 2
+torch.Size([128, 128, 16, 16])
+-- Layer 3
+torch.Size([128, 256, 8, 8])
+-- Layer 4
+torch.Size([128, 512, 4, 4])
+-- AvgPool 2D
+torch.Size([128, 512, 1, 1])
+-- View
+torch.Size([128, 512])
+-- Linear
+torch.Size([128, 10])
