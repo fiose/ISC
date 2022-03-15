@@ -10,8 +10,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import matplotlib.pyplot as plt
-from pathlib import Path
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -71,11 +69,11 @@ class BasicBlock(nn.Module):
 #         out = F.relu(out)
 #         return out
 
+
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 64
-        self.it = 0
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3,
                                stride=1, padding=1, bias=False)
@@ -94,49 +92,15 @@ class ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def saveImages(self, x, desc):
-        print('Saving images from layer "'+desc+'": ' + str(x.shape))
-        Path('images/').mkdir(parents=True, exist_ok=True)
-
-        # Print each batch image
-        for i in range(len(x)):
-            plt.figure()
-
-            if len(x.shape) == 4:
-                # Permute CxWxH to WxHxC
-                mat = x[i].permute(1, 2, 0).detach().numpy()
-                # Get only first channel
-                mat = mat[:, :, 0]
-            else:
-                mat = x[i].detach().numpy()
-                mat = [ [x] for x in mat ]
-
-            # Save image
-            plt.matshow(mat)
-            imageName = 'images/it_'+str(self.it)+'_desc_'+desc+'_image_'+str(i)+'.png'
-            plt.savefig(imageName, dpi=300, bbox_inches='tight')
-            print('Saved ' + imageName)
-
     def forward(self, x):
-        self.saveImages(x, 'in')
         out = F.relu(self.bn1(self.conv1(x)))
-        self.saveImages(out, 'relu')
         out = self.layer1(out)
-        self.saveImages(out, 'layer1')
         out = self.layer2(out)
-        self.saveImages(out, 'layer2')
         out = self.layer3(out)
-        self.saveImages(out, 'layer3')
         out = self.layer4(out)
-        self.saveImages(out, 'layer4')
         out = F.avg_pool2d(out, 4)
-        self.saveImages(out, 'pool')
         out = out.view(out.size(0), -1)
-        self.saveImages(out, 'view')
         out = self.linear(out)
-        self.saveImages(out, 'linear')
-
-        self.it += 1
         return out
 
 
